@@ -367,8 +367,6 @@ public class MainController {
                 palletSum = palletSum + palletThisItem;
             }
 
-            carsCount = (int) Math.ceil(palletSum / 32.0); // сколько автомобилей у поставщика
-
             System.out.println(s.getName() + " " + palletSum); //  сколько палет по поставщику
 
             int id = 0;
@@ -400,146 +398,29 @@ public class MainController {
                 orderRvi.setComment(String.valueOf(entry.getValue() / s.getPiecesInPallet())); // сколько палет этого товара
                 if (!allOrderRvi.contains(orderRvi)) orderRviService.save(orderRvi);
                 orderRviList.add(orderRvi);
-            }
 
-
-            ArrayList<Str> allStr = new ArrayList<>(); // надо создать строки
-
-            if (carsCount > 12) { // 29
-                int k = 0; // сколько всего дней будут ехать 3
-                int day = carsCount / 10; // дней по 10 машин 2
-                int fin = carsCount % 10; // финальный заказ автомобилей. Мб 0; 9
-                if (fin != 0) k = day + 1;
-                else k = day;
-                for (int i = 0; i < k; i++) {
-                    int palletAdded = 0;
-                    if (i + 1 == k) {
-                        palletAdded = 32 * fin;
-                    } else palletAdded = 320;
-                    while (palletAdded != 0) { //
-
-                        int p = 0;
-                        for (Item it : itemPalletCount.keySet()) {
-                            p = p + itemPalletCount.get(it);
-                        }
-                        if (p == 0) {
-                            palletAdded = 0;
-                            break;
-                        }
-
-                        for (Item item : itemPalletCount.keySet()) {
-                            OrderRvi orderRvi = orderRviList.stream().filter(orderRvi1 -> orderRvi1.getPlu() == item.getPlu()).findFirst().get();
-                            if (itemPalletCount.get(item) != 0) {
-                                int palletCount = itemPalletCount.get(item);
-                                Str str = new Str();
-                                if (palletCount > palletAdded) {
-
-                                    itemPalletCount.put(item, palletCount - palletAdded);
-                                    str.setId(id);
-                                    str.setOrderNumber(orderRvi.getOrderNumber());
-                                    str.setSupplierName(orderRvi.getSupplierName());
-                                    str.setPlu(orderRvi.getPlu());
-                                    str.setProductNameRus(orderRvi.getProductNameRus());
-                                    str.setProductNameEng(orderRvi.getProductNameEng());
-                                    str.setOrderCount(palletAdded * s.getPiecesInPallet());
-                                    orderRvi.setOrderCount(orderRvi.getOrderCount() - (palletAdded * s.getPiecesInPallet()));
-                                    str.setWeekOfArrival(orderRvi.getWeekOfArrival() - k + i + 1);
-                                    str.setDestination(orderRvi.getDestination());
-                                    str.setPurposeOfOrder(orderRvi.getPurposeOfOrder());
-                                    str.setDateOrder(orderRvi.getDateOrder());
-                                    str.setMetkaPromo(orderRvi.getMetkaPromo());
-                                    str.setComment(orderRvi.getComment());
-                                    allStr.add(str);
-                                    id++;
-                                    palletAdded = 0;
-                                    break;
-//                                    заказать все и еще останется
-                                } else {
-//                                    заказать 320 остальные в следующую кучу
-                                    str.setId(id);
-                                    str.setOrderNumber(orderRvi.getOrderNumber());
-                                    str.setSupplierName(orderRvi.getSupplierName());
-                                    str.setPlu(orderRvi.getPlu());
-                                    str.setProductNameRus(orderRvi.getProductNameRus());
-                                    str.setProductNameEng(orderRvi.getProductNameEng());
-                                    str.setOrderCount(palletCount * s.getPiecesInPallet());
-                                    orderRvi.setOrderCount(0);
-                                    str.setWeekOfArrival(orderRvi.getWeekOfArrival() - k + i + 1);
-                                    str.setDestination(orderRvi.getDestination());
-                                    str.setPurposeOfOrder(orderRvi.getPurposeOfOrder());
-                                    str.setDateOrder(orderRvi.getDateOrder());
-                                    str.setMetkaPromo(orderRvi.getMetkaPromo());
-                                    str.setComment(orderRvi.getComment());
-                                    allStr.add(str);
-                                    id++;
-                                    palletAdded = palletAdded - palletCount;
-                                    itemPalletCount.put(item, 0);
-                                    id++;
-                                }
-                            }
-                        }
-                    }
-//                        в первый день и далее до конечного
-//                        надо заказать 320 паллет
-
-                }
-            } else {
-                for (OrderRvi orderRvi : orderRviList) {
-                    Str str = new Str();
-                    str.setId(id);
-                    str.setOrderNumber(orderRvi.getOrderNumber());
-                    str.setSupplierName(orderRvi.getSupplierName());
-                    str.setPlu(orderRvi.getPlu());
-                    str.setProductNameRus(orderRvi.getProductNameRus());
-                    str.setProductNameEng(orderRvi.getProductNameEng());
-                    str.setOrderCount(orderRvi.getOrderCount());
-                    str.setWeekOfArrival(orderRvi.getWeekOfArrival());
-                    str.setDestination(orderRvi.getDestination());
-                    str.setPurposeOfOrder(orderRvi.getPurposeOfOrder());
-                    str.setDateOrder(orderRvi.getDateOrder());
-                    str.setMetkaPromo(orderRvi.getMetkaPromo());
-                    str.setComment(orderRvi.getComment());
-                    allStr.add(str);
-                }
-            }
-
-            int maxWeekOfArrival = allStr.stream().max(Comparator.comparingInt(Str::getWeekOfArrival)).get().getWeekOfArrival();
-            int minWeekOfArrival = allStr.stream().min(Comparator.comparingInt(Str::getWeekOfArrival)).get().getWeekOfArrival();
-            ArrayList<Str> minWeekOfArrivalList = new ArrayList<>(allStr.stream().filter(str -> str.getWeekOfArrival() == minWeekOfArrival).collect(Collectors.toList()));
-            ArrayList<Str> maxWeekOfArrivalList = new ArrayList<>(allStr.stream().filter(str -> str.getWeekOfArrival() == maxWeekOfArrival).collect(Collectors.toList()));
-
-
-            for (Str str : allStr) {
                 r++;
                 Row rowData = sheet.createRow(r);
                 Cell cellSupplierName = rowData.createCell(1);
                 cellSupplierName.setCellValue(s.getName());
                 Cell cellPluNumber = rowData.createCell(2);
-                cellPluNumber.setCellValue(str.getPlu());
+                cellPluNumber.setCellValue(orderRvi.getPlu());
                 Cell cellPluName = rowData.createCell(3);
-                cellPluName.setCellValue(str.getProductNameRus());
+                cellPluName.setCellValue(orderRvi.getProductNameRus());
                 Cell cellOrderCount = rowData.createCell(5);
-                cellOrderCount.setCellValue(str.getOrderCount());
+                cellOrderCount.setCellValue(orderRvi.getOrderCount());
                 Cell cellDeliveryWeek = rowData.createCell(9);
-
-                if (minWeekOfArrivalList.contains(str))
-                    cellDeliveryWeek.setCellValue(maxWeekOfArrival);
-                else if (maxWeekOfArrivalList.contains(str))
-                    cellDeliveryWeek.setCellValue(minWeekOfArrival);
-                else
-                    cellDeliveryWeek.setCellValue(str.getWeekOfArrival());
-
+                cellDeliveryWeek.setCellValue(orderRvi.getWeekOfArrival());
                 Cell cellDestination = rowData.createCell(13);
-                cellDestination.setCellValue(str.getDestination());
+                cellDestination.setCellValue(orderRvi.getDestination());
                 Cell cellTarget = rowData.createCell(14);
-                cellTarget.setCellValue(str.getPurposeOfOrder());
+                cellTarget.setCellValue(orderRvi.getPurposeOfOrder());
                 Cell dateOrder = rowData.createCell(15);
-                dateOrder.setCellValue(str.getDateOrder());
+                dateOrder.setCellValue(orderRvi.getDateOrder());
                 Cell promo = rowData.createCell(16);
-                promo.setCellValue(str.getMetkaPromo());
-
-//                    Cell cellComment = rowData.createCell(17);
-//                    cellComment.setCellValue(entry.getValue() / s.getPiecesInPallet() + " паллет");
+                promo.setCellValue(orderRvi.getMetkaPromo());
+                Cell cellComment = rowData.createCell(17);
+                cellComment.setCellValue(entry.getValue() / s.getPiecesInPallet() + " паллет");
 
             }
 
