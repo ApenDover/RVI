@@ -80,16 +80,13 @@ public class ReadExel {
 
         TreeSet<Supplier> supplierArrayLists = new TreeSet<>();
         HashMap<String, Integer> supplierMinOrder = new HashMap<>();
-        HashMap<String, Integer> supplierPiecesInPallet = new HashMap<>();
         Sheet sheetTwo = wb.getSheetAt(1);
         int k = 1;
         while (sheetTwo.getRow(k) != null) {
             Row row = sheetTwo.getRow(k);
             String name = row.getCell(titleNumberHashMapList2.get("supplierName")).getStringCellValue();
             int minOrder = (int) row.getCell(titleNumberHashMapList2.get("minOrder")).getNumericCellValue();
-            int piecesInPallet = (int) row.getCell(titleNumberHashMapList2.get("piecesInPallet")).getNumericCellValue();
             supplierMinOrder.put(name, minOrder);
-            supplierPiecesInPallet.put(name, piecesInPallet);
             k++;
         }
 
@@ -99,10 +96,9 @@ public class ReadExel {
             Row row = sheet.getRow(i);
             String name = row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue();
             int minOrder = supplierMinOrder.get(name);
-            int piecesInPallet = supplierPiecesInPallet.get(name);
             int lt = (int) row.getCell(titleNumberHashMap.get("lt")).getNumericCellValue();
             List<Item> itemList = new ArrayList<>();
-            Supplier supplier = new Supplier(name, minOrder, null, false, lt, itemList, piecesInPallet);
+            Supplier supplier = new Supplier(name, minOrder, null, false, lt, itemList);
             i++;
             supplierArrayLists.add(supplier);
         }

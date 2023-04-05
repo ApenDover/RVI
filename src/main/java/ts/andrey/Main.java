@@ -25,8 +25,8 @@ public class Main {
         application.setWebApplicationType(WebApplicationType.NONE);
         ApplicationContext context = SpringApplication.run(Main.class, args);
         MainController mainController = context.getBean(MainController.class);
-        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main("/Users/andrey/Downloads/RVI.xlsx"); // путь к основной табличке
-//        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main(args[0]); // путь к основной табличке
+//        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main("/Users/andrey/Downloads/RVI-justCount.xlsx"); // путь к основной табличке
+        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main(args[0]); // путь к основной табличке
 
 //        Scanner scanner = new Scanner(System.in);
 //        System.out.println("Путь к основному файлу excel (первый лист - основная таблица, второй лист - поставщики) : ");
@@ -58,8 +58,8 @@ public class Main {
         });
 
         try {
-//            mainController.writeExel(args[1], actualResult); // куда сохранять заказ
-            mainController.writeExel("/Users/andrey/Downloads/ORDER2.xlsx", actualResult); // куда сохранять заказ
+            mainController.writeExel(args[1], actualResult); // куда сохранять заказ
+//            mainController.writeExel("/Users/andrey/Downloads/ORDER2.xlsx", actualResult); // куда сохранять заказ
 //            mainController.writeExel(readyTable, actualResult); // куда сохранять заказ
 //            mainController.writeExel(args[1], actualResult);
         } catch (IOException e) {

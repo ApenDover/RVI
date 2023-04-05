@@ -350,7 +350,7 @@ public class MainController {
         }
 
         int r = 0;
-        System.out.println("сколько палет по поставщику");
+//        System.out.println("сколько палет по поставщику");
 
         for (Supplier s : result.keySet()) {// перебираем всех поставщиков результата
 
@@ -360,18 +360,10 @@ public class MainController {
             int deliveryWeek = itemService.findMinDeliveryWeek(s);
             int palletSum = 0; // сколько паллет данного товара
             HashMap<Item, Integer> itemPalletCount = new HashMap<>();
-            HashMap<Item, Integer> itemPalletCountOrdered = new HashMap<>();
-            for (Map.Entry<Item, Integer> entry : result.get(s).entrySet()) {
-                int palletThisItem = (int) Math.ceil(entry.getValue() / (double) s.getPiecesInPallet());
-                itemPalletCount.put(entry.getKey(), palletThisItem);
-                palletSum = palletSum + palletThisItem;
-            }
 
-            System.out.println(s.getName() + " " + palletSum); //  сколько палет по поставщику
+//            System.out.println(s.getName() + " " + palletSum); //  сколько палет по поставщику
 
-            int id = 0;
             for (Map.Entry<Item, Integer> entry : result.get(s).entrySet()) { // записываем в базу общий заказ
-                id++;
                 DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
                 String promoString = "";
@@ -395,7 +387,6 @@ public class MainController {
                 orderRvi.setMetkaPromo(promoString);
                 Item t = entry.getKey();
                 orderRvi.setTz(tz.get(t));
-                orderRvi.setComment(String.valueOf(entry.getValue() / s.getPiecesInPallet())); // сколько палет этого товара
                 if (!allOrderRvi.contains(orderRvi)) orderRviService.save(orderRvi);
                 orderRviList.add(orderRvi);
 
@@ -420,7 +411,7 @@ public class MainController {
                 Cell promo = rowData.createCell(16);
                 promo.setCellValue(orderRvi.getMetkaPromo());
                 Cell cellComment = rowData.createCell(17);
-                cellComment.setCellValue(entry.getValue() / s.getPiecesInPallet() + " паллет");
+                cellComment.setCellValue(orderRvi.getTz() * 7 + " дн. товарный запас");
 
             }
 
