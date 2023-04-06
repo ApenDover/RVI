@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
+@Table(name = "supplier")
 public class Supplier implements Comparable<Supplier> {
 
     @Id
@@ -25,7 +26,6 @@ public class Supplier implements Comparable<Supplier> {
     private List<Item> itemList;
 
     public Supplier(String name, int minOrder, String country, boolean supplyWay, int lt, List<Item> itemList) {
-        this.id = id;
         this.name = name;
         this.minOrder = minOrder;
         this.country = country;

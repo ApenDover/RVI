@@ -4,30 +4,31 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
 import ts.andrey.DAO.ItemDAO;
 import ts.andrey.exel.ReadExel;
 import ts.andrey.logic.NowWeekNumber;
-import ts.andrey.model.*;
+import ts.andrey.model.Item;
+import ts.andrey.model.ItemOutlay;
+import ts.andrey.model.Supplier;
 import ts.andrey.service.*;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@RestController
+//@RestController
+@Component
 public class MainController {
     private DistributionCenterService distributionCenterService;
     private ItemOutlayService itemOutlayService;
     private ItemService itemService;
     private SupplierService supplierService;
-    private OrderRviService orderRviService;
     private ItemDAO itemDAO;
     private int orderPalletCount = 0;
     private int firstWeek = 0;
@@ -38,28 +39,25 @@ public class MainController {
     private HashMap<Item, Integer> tz = new HashMap<>();
 
     @Autowired
-    public MainController(DistributionCenterService distributionCenterService, ItemOutlayService itemOutlayService, ItemService itemService, SupplierService supplierService, OrderRviService orderRviService, ItemDAO itemDAO) {
+    public MainController(DistributionCenterService distributionCenterService, ItemOutlayService itemOutlayService, ItemService itemService, SupplierService supplierService, ItemDAO itemDAO) {
         this.distributionCenterService = distributionCenterService;
         this.itemOutlayService = itemOutlayService;
         this.itemService = itemService;
         this.supplierService = supplierService;
-        this.orderRviService = orderRviService;
         this.itemDAO = itemDAO;
     }
 
-    @GetMapping()
+    //    @GetMapping()
     public HashMap<Supplier, HashMap<Item, Integer>> main(String exelPath) {
 
-//        System.out.println(supplierService.findAll().size());
-
-//        supplierService.removeAll();
-        itemService.removeAll();
-        itemOutlayService.removeAll();
+//        itemService.removeAll();
+//        itemOutlayService.removeAll();
 
         new ReadExel(exelPath, supplierService, itemService, itemOutlayService);
-//        System.out.println("supplier: " + readExel.getSupplierTreeSet().size());
-//        System.out.println("item: " + readExel.getItemTreeSet().size());
-//        System.out.println("itemOutlay: " + readExel.getItemOutlayTreeSet().size());
+
+        System.out.println("supplier: " + supplierService.findAll().size());
+        System.out.println("item: " + itemService.findAll().size());
+        System.out.println("itemOutlay: " + itemOutlayService.findAll().size());
 
         HashMap<Supplier, HashMap<Item, Integer>> fin = new HashMap<>();
 
@@ -338,8 +336,6 @@ public class MainController {
 
     public void writeExel(String path, HashMap<Supplier, HashMap<Item, Integer>> result) throws IOException {
 
-        ArrayList<OrderRvi> allOrderRvi = new ArrayList<>(orderRviService.findAll());
-
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("order");
         Row row = sheet.createRow(0);
@@ -353,8 +349,6 @@ public class MainController {
 //        System.out.println("сколько палет по поставщику");
 
         for (Supplier s : result.keySet()) {// перебираем всех поставщиков результата
-
-            ArrayList<OrderRvi> orderRviList = new ArrayList<>();
 
             int carsCount = 0; // сколько автомобилей у поставщика
             int deliveryWeek = itemService.findMinDeliveryWeek(s);
@@ -370,48 +364,28 @@ public class MainController {
                 if (entry.getKey().isPromo()) promoString = "Да";
                 else promoString = "Нет";
 
-                OrderRvi orderRvi = new OrderRvi();
-                orderRvi.setDateOrder(dateFormat.format(new Date()));
-                orderRvi.setSupplierName(s.getName());
-                int maxId = 0;
-                if (allOrderRvi.size() == 0) maxId = 1;
-                else maxId = allOrderRvi.stream().max(Comparator.comparingInt(OrderRvi::getId)).get().getId();
-
-                orderRvi.setOrderNumber(s.getName().substring(0, 3) + String.format("%04d%n", maxId));
-                orderRvi.setPlu(entry.getKey().getPlu());
-                orderRvi.setProductNameRus(entry.getKey().getName());
-                orderRvi.setOrderCount(entry.getValue());
-                orderRvi.setWeekOfArrival(deliveryWeek);
-                orderRvi.setDestination("Софьино");
-                orderRvi.setPurposeOfOrder("Регуляр");
-                orderRvi.setMetkaPromo(promoString);
-                Item t = entry.getKey();
-                orderRvi.setTz(tz.get(t));
-                if (!allOrderRvi.contains(orderRvi)) orderRviService.save(orderRvi);
-                orderRviList.add(orderRvi);
-
                 r++;
                 Row rowData = sheet.createRow(r);
                 Cell cellSupplierName = rowData.createCell(1);
                 cellSupplierName.setCellValue(s.getName());
                 Cell cellPluNumber = rowData.createCell(2);
-                cellPluNumber.setCellValue(orderRvi.getPlu());
+                cellPluNumber.setCellValue(entry.getKey().getPlu());
                 Cell cellPluName = rowData.createCell(3);
-                cellPluName.setCellValue(orderRvi.getProductNameRus());
+                cellPluName.setCellValue(entry.getKey().getName());
                 Cell cellOrderCount = rowData.createCell(5);
-                cellOrderCount.setCellValue(orderRvi.getOrderCount());
+                cellOrderCount.setCellValue(entry.getValue());
                 Cell cellDeliveryWeek = rowData.createCell(9);
-                cellDeliveryWeek.setCellValue(orderRvi.getWeekOfArrival());
+                cellDeliveryWeek.setCellValue(deliveryWeek);
                 Cell cellDestination = rowData.createCell(13);
-                cellDestination.setCellValue(orderRvi.getDestination());
+                cellDestination.setCellValue("Софьино");
                 Cell cellTarget = rowData.createCell(14);
-                cellTarget.setCellValue(orderRvi.getPurposeOfOrder());
+                cellTarget.setCellValue("Регуляр");
                 Cell dateOrder = rowData.createCell(15);
-                dateOrder.setCellValue(orderRvi.getDateOrder());
+                dateOrder.setCellValue(dateFormat.format(new Date()));
                 Cell promo = rowData.createCell(16);
-                promo.setCellValue(orderRvi.getMetkaPromo());
+                promo.setCellValue(promoString);
                 Cell cellComment = rowData.createCell(17);
-                cellComment.setCellValue(orderRvi.getTz() * 7 + " дн. товарный запас");
+                cellComment.setCellValue(tz.get(entry.getKey()) * 7 + " дн. товарный запас");
 
             }
 

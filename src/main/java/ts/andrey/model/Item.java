@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "Item")
+@Table(name = "item")
 public class Item implements Comparable<Item> {
 
     @Id

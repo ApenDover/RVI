@@ -25,7 +25,7 @@ public class ItemService {
         return itemRepository.findAll();
     }
 
-    public int findMinDeliveryWeek(Supplier supplier){
+    public int findMinDeliveryWeek(Supplier supplier) {
         TreeSet<Integer> allDeliveryWeek = new TreeSet<>();
         itemRepository.findItemsBySupplierAndDeliveryWeekIsNotNullAndStatusIs(supplier, "Активная").forEach(item -> {
             allDeliveryWeek.add(item.getDeliveryWeek());
@@ -35,8 +35,9 @@ public class ItemService {
     }
 
     public List<Item> findAllBySupplier(Supplier supplier) {
-        return itemRepository.findItemsBySupplierAndStatusIs(supplier, "Активная");
+        return itemRepository.findItemsBySupplierAndStatusIs(supplier.getId(), "Активная");
     }
+
     public List<Item> findAllBySupplierNotNull(Supplier supplier) {
         return itemRepository.findItemsBySupplierAndDeliveryWeekIsNotNullAndStatusIs(supplier, "Активная");
     }

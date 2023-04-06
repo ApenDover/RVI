@@ -23,7 +23,6 @@ public class ItemOutlay implements Comparable<ItemOutlay> {
     private Item itemPlu;
 
     public ItemOutlay(int week, int outlayCount, int deliveryCount, Item itemPlu) {
-        this.id = id;
         this.week = week;
         this.outlayCount = outlayCount;
         this.deliveryCount = deliveryCount;
@@ -92,6 +91,6 @@ public class ItemOutlay implements Comparable<ItemOutlay> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getWeek(), getItemPlu());
+        return Objects.hash(getWeek(), getItemPlu());
     }
 }

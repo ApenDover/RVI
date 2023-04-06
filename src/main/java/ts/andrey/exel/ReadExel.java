@@ -21,28 +21,34 @@ public class ReadExel {
     private TreeSet<ItemOutlay> itemOutlayTreeSet = new TreeSet<>();
 
     public ReadExel(String fileName, SupplierService supplierService, ItemService itemService, ItemOutlayService itemOutlayService) {
+
         this.fileName = fileName;
-        ArrayList<Supplier> allSupplier = new ArrayList<>(supplierService.findAll());
+//
         try {
             Workbook workbook = new XSSFWorkbook(fileName);
             HashMap<String, Integer> titleNumberHashMap = readTitleList1(workbook);
             HashMap<String, Integer> titleNumberHashMapList2 = readTitleList2(workbook);
+
+            List<Supplier> allSupplier = supplierService.findAll();
+
             supplierTreeSet = readSupplier(workbook, titleNumberHashMap, titleNumberHashMapList2, supplierService);
             supplierTreeSet.forEach(supplier -> {
-                if (!allSupplier.contains(supplier)) supplierService.save(supplier);
+                if (!allSupplier.contains(supplier)) {
+                    supplierService.save(supplier);
+                }
             });
+
             itemTreeSet = readItem(workbook, titleNumberHashMap, supplierService);
             itemTreeSet.forEach(itemService::save);
+
             itemOutlayTreeSet = readItemOutlay(workbook, titleNumberHashMap, itemService, supplierService);
-            itemOutlayTreeSet.forEach(itemOutlay -> {
-                itemOutlay.setId(1);
-                itemOutlayService.save(itemOutlay);
-            });
-//            System.out.println();
+            itemOutlayTreeSet.forEach(itemOutlayService::save);
+
             workbook.close();
         } catch (Exception e) {
             System.out.println(e.getMessage() + " " + Arrays.toString(e.getStackTrace()));
         }
+
     }
 
     private static TreeSet<Item> readItem(Workbook wb, HashMap<String, Integer> titleNumberHashMap, SupplierService supplierService) {
@@ -109,21 +115,21 @@ public class ReadExel {
         TreeSet<ItemOutlay> itemOutlayArrayList = new TreeSet<>();
         Sheet sheet = wb.getSheetAt(0);
         int i = 4;
+        int key = 0;
         while (sheet.getRow(i) != null) { //  от 4 до ниже
             Row row = sheet.getRow(i);
             Item item = itemService.findOne((int) row.getCell(titleNumberHashMap.get("plu")).getNumericCellValue());
             for (int k = 1; k < 54; k++) {
                 if (titleNumberHashMap.containsKey("outlayCount" + k)) {
+                    key++;
                     int outlayCount = (int) row.getCell(titleNumberHashMap.get("outlayCount" + k)).getNumericCellValue();
                     int deliveryCount = (int) row.getCell(titleNumberHashMap.get("deliveryCount" + k)).getNumericCellValue();
-                    ItemOutlay itemOutlay = new ItemOutlay(k, outlayCount, deliveryCount, item);
-                    itemOutlayArrayList.add(itemOutlay);
 
                     int deliveryWeek = itemService.findMinDeliveryWeek(supplierService.findByName(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue()));
                     int lt = (int) row.getCell(titleNumberHashMap.get("lt")).getNumericCellValue();
 
                     if (!item.isPromo()) {
-                        if ((deliveryWeek + lt) < 54 & k >= deliveryWeek & k <= deliveryWeek + lt) {
+                        if ((deliveryWeek + lt) < 54 && k >= deliveryWeek && k <= deliveryWeek + lt) {
                             int promo = (int) row.getCell(titleNumberHashMap.get("promo" + k)).getNumericCellValue();
                             if (promo > 0) item.setPromo(true);
                         }
@@ -135,8 +141,9 @@ public class ReadExel {
                             }
                         }
                     }
-//                    System.out.println(itemOutlayArrayList.size());
-//                    System.out.println();
+                    ItemOutlay itemOutlay = new ItemOutlay(k, outlayCount, deliveryCount, item);
+                    itemOutlay.setId(key);
+                    itemOutlayArrayList.add(itemOutlay);
                 }
             }
             i++;
@@ -145,6 +152,7 @@ public class ReadExel {
     }
 
     private static HashMap<String, Integer> readTitleList1(Workbook wb) {
+
         HashMap<String, Integer> titleNumberHashMap = new HashMap<>();
         Sheet sheet = wb.getSheetAt(0);
         Row row = sheet.getRow(3);
@@ -212,10 +220,12 @@ public class ReadExel {
             }
             i++;
         }
+
         return titleNumberHashMap;
     }
 
     private static HashMap<String, Integer> readTitleList2(Workbook wb) {
+
         HashMap<String, Integer> titleNumberHashMap = new HashMap<>();
         int i = 0;
         Sheet sheetTwo = wb.getSheetAt(1);
@@ -236,6 +246,7 @@ public class ReadExel {
             }
             i++;
         }
+
         return titleNumberHashMap;
     }
 
