@@ -10,30 +10,20 @@ import ts.andrey.model.Supplier;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Scanner;
 
 @SpringBootApplication
 public class Main {
 
     public static void main(String[] args) {
 
-//        int n = 2;
-//        String.format("%04d%n", n);
-
-
         SpringApplication application = new SpringApplication(Main.class);
         application.setWebApplicationType(WebApplicationType.NONE);
         ApplicationContext context = SpringApplication.run(Main.class, args);
         MainController mainController = context.getBean(MainController.class);
-//        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main("/Users/andrey/Downloads/RVI.xlsx"); // путь к основной табличке
-        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main(args[0]); // путь к основной табличке
+        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main("/Users/andrey/Downloads/RVI-justCount.xlsx"); // путь к основной табличке
+//        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main(args[0]); // путь к основной табличке
 
-//        Scanner scanner = new Scanner(System.in);
-//        System.out.println("Путь к основному файлу excel (первый лист - основная таблица, второй лист - поставщики) : ");
-//        String mainTable = scanner.nextLine();
-//        System.out.println("Путь к папке, куда сохранить excel файл заказа : ");
-//        String readyTable = scanner.nextLine();
-//        HashMap<Supplier, HashMap<Item, Integer>> result = mainController.main(mainTable); // путь к основной табличке
+
 
         result.forEach((s, integerIntegerHashMap) -> {
             System.out.println("--------------");
@@ -58,10 +48,10 @@ public class Main {
         });
 
         try {
-            mainController.writeExel(args[1], actualResult); // куда сохранять заказ
-//            mainController.writeExel("/Users/andrey/Downloads/ORDER.xlsx", actualResult); // куда сохранять заказ
-//            mainController.writeExel(readyTable, actualResult); // куда сохранять заказ
-//            mainController.writeExel(args[1], actualResult);
+
+//            mainController.writeExel(args[1], actualResult); // куда сохранять заказ
+            mainController.writeExel("/Users/andrey/Downloads/ORDER.xlsx", actualResult); // куда сохранять заказ
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

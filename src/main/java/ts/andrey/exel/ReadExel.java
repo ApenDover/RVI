@@ -87,9 +87,9 @@ public class ReadExel {
             Row row = sheetTwo.getRow(k);
             String name = row.getCell(titleNumberHashMapList2.get("supplierName")).getStringCellValue();
             int minOrder = (int) row.getCell(titleNumberHashMapList2.get("minOrder")).getNumericCellValue();
-            int piecesInPallet = (int) row.getCell(titleNumberHashMapList2.get("piecesInPallet")).getNumericCellValue();
+//            int piecesInPallet = (int) row.getCell(titleNumberHashMapList2.get("piecesInPallet")).getNumericCellValue();
             supplierMinOrder.put(name, minOrder);
-            supplierPiecesInPallet.put(name, piecesInPallet);
+//            supplierPiecesInPallet.put(name, piecesInPallet);
             k++;
         }
 
@@ -99,10 +99,10 @@ public class ReadExel {
             Row row = sheet.getRow(i);
             String name = row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue();
             int minOrder = supplierMinOrder.get(name);
-            int piecesInPallet = supplierPiecesInPallet.get(name);
+//            int piecesInPallet = supplierPiecesInPallet.get(name);
             int lt = (int) row.getCell(titleNumberHashMap.get("lt")).getNumericCellValue();
             List<Item> itemList = new ArrayList<>();
-            Supplier supplier = new Supplier(name, minOrder, null, false, lt, itemList, piecesInPallet);
+            Supplier supplier = new Supplier(name, minOrder, null, false, lt, itemList);
             i++;
             supplierArrayLists.add(supplier);
         }
@@ -233,9 +233,6 @@ public class ReadExel {
                 }
                 if (s.equals("Объем к заказу мин")) {
                     titleNumberHashMap.put("minOrder", i);
-                }
-                if (s.equals("В паллете")) {
-                    titleNumberHashMap.put("piecesInPallet", i);
                 }
             }
             i++;

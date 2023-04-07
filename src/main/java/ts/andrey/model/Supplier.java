@@ -23,11 +23,9 @@ public class Supplier implements Comparable<Supplier> {
     private int lt;
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private List<Item> itemList;
-    @Column(name = "pieces_in_pallet")
-    private int piecesInPallet;
 
 
-    public Supplier(String name, int minOrder, String country, boolean supplyWay, int lt, List<Item> itemList, int piecesInPallet) {
+    public Supplier(String name, int minOrder, String country, boolean supplyWay, int lt, List<Item> itemList) {
         this.id = id;
         this.name = name;
         this.minOrder = minOrder;
@@ -35,7 +33,6 @@ public class Supplier implements Comparable<Supplier> {
         this.supplyWay = supplyWay;
         this.lt = lt;
         this.itemList = itemList;
-        this.piecesInPallet = piecesInPallet;
     }
 
     public Supplier() {
@@ -95,14 +92,6 @@ public class Supplier implements Comparable<Supplier> {
 
     public void setItemList(List<Item> itemList) {
         this.itemList = itemList;
-    }
-
-    public int getPiecesInPallet() {
-        return piecesInPallet;
-    }
-
-    public void setPiecesInPallet(int piecesInPallet) {
-        this.piecesInPallet = piecesInPallet;
     }
 
     @Override

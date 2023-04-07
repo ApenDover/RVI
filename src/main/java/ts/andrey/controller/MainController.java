@@ -50,22 +50,21 @@ public class MainController {
     @GetMapping()
     public HashMap<Supplier, HashMap<Item, Integer>> main(String exelPath) {
 
-//        System.out.println(supplierService.findAll().size());
 
 //        supplierService.removeAll();
-        itemService.removeAll();
-        itemOutlayService.removeAll();
+//        itemService.removeAll();
+//        itemOutlayService.removeAll();
 
+        // создаем все объекты
         new ReadExel(exelPath, supplierService, itemService, itemOutlayService);
-//        System.out.println("supplier: " + readExel.getSupplierTreeSet().size());
-//        System.out.println("item: " + readExel.getItemTreeSet().size());
-//        System.out.println("itemOutlay: " + readExel.getItemOutlayTreeSet().size());
 
         HashMap<Supplier, HashMap<Item, Integer>> fin = new HashMap<>();
 
         ArrayList<Supplier> allSupplier = new ArrayList<>(supplierService.findAll());
 
         for (Supplier supplier : allSupplier) {
+
+            System.out.println("СЧИТАЮ " + supplier);
 
             orderPalletCount = 0; // сколько палет заказано
             lastWeek = 0;
@@ -98,6 +97,7 @@ public class MainController {
                 TreeSet<Integer> allOrderWeek = new TreeSet<>(itemDAO.allOrderWeek(supplier)); // << отсортированные все недели на которых рекомендован заказ
 
                 HashMap<Item, Integer> back = new HashMap<>();
+
                 for (Integer i : allOrderWeek) { // << перебираем все недели от текущей к последней и добиваем заказы
                     HashMap<Item, Integer> thisRound = countAllStroke(i, supplier);
                     thisRound.forEach((item, integer) -> {
@@ -107,24 +107,20 @@ public class MainController {
                         } else back.put(item, integer);
                     });
                 }
-//                System.out.println(supplier.getName() + " - order pallet: " + pallet + " / " + supplier.getMinOrder());
 
                 HashMap<Item, Integer> memoryItemBeforeAddRecommendedOrder = new HashMap<>();
                 allItemsSupplier.forEach(item -> {
                     memoryItemBeforeAddRecommendedOrder.put(item, item.getRecommendedOrder());
                 });
 
-//                System.out.println("Я добавил все необходимы и сейчас осталось добавить " + nowPallet + " / " + supplier.getMinOrder());
-//                back.forEach((item, integer) -> System.out.println(item.getPlu() + " - " + integer));
-
                 if (countPalletNeeded > 0)
-//                    System.out.println("\n -- Плавное добавление по всем: " + "(" + nowPallet + ") " + pallet + "/" + supplier.getMinOrder() + " -- \n");
-
                     while (countPalletNeeded > 0) {
                         HashMap<Item, Integer> itemStockHashMapAddOne = new HashMap<>(tradeStocks(allItemsSupplier)); // << считаем товарный запас для каждого товара добавив квант к рекомендованному заказу
 //                        System.out.println(" ########################### ");
-                        itemStockHashMapAddOne.forEach((item, integer) -> System.out.println(item.getPlu() + " : " + integer + " tz."));
-                        System.out.println(" ############# ");
+
+//                        itemStockHashMapAddOne.forEach((item, integer) -> System.out.println(item.getPlu() + " : " + integer + " tz."));
+//                        System.out.println(" ############# ");
+
                         Item minItem = itemStockHashMapAddOne.entrySet().stream().min(Comparator.comparingInt(Map.Entry::getValue)).get().getKey(); // взяли товар с минимальным товарный запас
 
                         tz.put(minItem, itemStockHashMapAddOne.get(minItem)); // актуализируем товарный запас для выбранного
@@ -133,20 +129,24 @@ public class MainController {
                         if (back.containsKey(minItem)) {
                             int orderCount = back.get(minItem);
                             if (supplier.getMinOrder() > 500) {
+                                System.out.println("Добавил " + orderCount + "/" + supplier.getMinOrder());
                                 back.put(minItem, orderCount + minItem.getQuantum());
                                 orderPalletCount = orderPalletCount + minItem.getQuantum();
                                 countPalletNeeded = countPalletNeeded - minItem.getQuantum();
                             } else {
+                                System.out.println("Добавил " + (orderCount + 1) + "/" + supplier.getMinOrder());
                                 back.put(minItem, orderCount + 1);
                                 orderPalletCount = orderPalletCount + 1;
                                 countPalletNeeded = countPalletNeeded - 1;
                             }
                         } else {
                             if (supplier.getMinOrder() > 500) {
+                                System.out.println("Добавил " + minItem.getQuantum() + "/" + supplier.getMinOrder());
                                 back.put(minItem, minItem.getQuantum());
                                 orderPalletCount = orderPalletCount + minItem.getQuantum();
                                 countPalletNeeded = countPalletNeeded - minItem.getQuantum();
                             } else {
+                                System.out.println("Добавил " + 1);
                                 back.put(minItem, 1);
                                 orderPalletCount = orderPalletCount + 1;
                                 countPalletNeeded = countPalletNeeded - 1;
@@ -162,7 +162,6 @@ public class MainController {
     }
 
     private HashMap<Item, Integer> countAllStroke(int orderWeek, Supplier supplier) {
-        Scanner scanner = new Scanner(System.in);
 
         HashMap<Item, Integer> back = new HashMap<>(); // << создаем корзину
 
@@ -188,7 +187,6 @@ public class MainController {
                     back.put(item, orderCount);
                     System.out.println(item.getSupplier().getName() + " - " + item.getPlu() + " - добавил " + orderCount + " палет");
                 }
-//                scanner.nextLine();
                 // << добавляем в корзину
                 orderPalletCount = orderPalletCount + orderCount; // << общее количество палетов к заказу
             }
@@ -198,6 +196,10 @@ public class MainController {
                 countPalletNeeded = countPalletNeeded - supplier.getMinOrder();
             }
             countPalletNeeded = supplier.getMinOrder() - countPalletNeeded; // << сколько нужно еще палет до кванта
+
+            System.out.println("Текущая неделя заказ добавлен: " + orderPalletCount + "/" + supplier.getMinOrder());
+            System.out.println("До кванта еще " + countPalletNeeded);
+
         } else {  // << не хватило палет, добиваем из рекомендаций на последующие недели
             int howAdd = countPalletNeeded;
 //            itemSet.addAll(itemService.findAllBySupplierNotNull(supplier)); //233! правка
@@ -208,11 +210,13 @@ public class MainController {
                 if (howAdd > 0) { // если еще нужно добавлять палеты
                     int countMaxQuantum = item.getRecommendedOrderRound() / item.getQuantum();
                     if (countPalletNeeded >= countMaxQuantum) { // если максимальное кол-во палетов по рекомендации имеет столько, то добавляем все возможные с этого товара
+                        System.out.println("Добавляю для " + item.getPlu() + " - " + countMaxQuantum);
                         back.put(item, countMaxQuantum);
                         orderPalletCount = orderPalletCount + countMaxQuantum;
                         howAdd = howAdd - countMaxQuantum;
                         countPalletNeeded = howAdd;
                     } else { // << иначе просто закрываем потребность этим товаром
+                        System.out.println("Добавляю для " + item.getPlu() + " - " + countPalletNeeded);
                         back.put(item, countPalletNeeded);
                         orderPalletCount = orderPalletCount + countPalletNeeded;
                         howAdd = howAdd - countPalletNeeded;
@@ -350,26 +354,12 @@ public class MainController {
         }
 
         int r = 0;
-        System.out.println("сколько палет по поставщику");
 
         for (Supplier s : result.keySet()) {// перебираем всех поставщиков результата
 
             ArrayList<OrderRvi> orderRviList = new ArrayList<>();
 
-            int carsCount = 0; // сколько автомобилей у поставщика
             int deliveryWeek = itemService.findMinDeliveryWeek(s);
-            int palletSum = 0; // сколько паллет данного товара
-            HashMap<Item, Integer> itemPalletCount = new HashMap<>();
-            HashMap<Item, Integer> itemPalletCountOrdered = new HashMap<>();
-            for (Map.Entry<Item, Integer> entry : result.get(s).entrySet()) {
-                int palletThisItem = (int) Math.ceil(entry.getValue() / (double) s.getPiecesInPallet());
-                itemPalletCount.put(entry.getKey(), palletThisItem);
-                palletSum = palletSum + palletThisItem;
-            }
-
-            carsCount = (int) Math.ceil(palletSum / 32.0); // сколько автомобилей у поставщика
-
-            System.out.println(s.getName() + " " + palletSum); //  сколько палет по поставщику
 
             int id = 0;
             for (Map.Entry<Item, Integer> entry : result.get(s).entrySet()) { // записываем в базу общий заказ
@@ -383,11 +373,6 @@ public class MainController {
                 OrderRvi orderRvi = new OrderRvi();
                 orderRvi.setDateOrder(dateFormat.format(new Date()));
                 orderRvi.setSupplierName(s.getName());
-                int maxId = 0;
-                if (allOrderRvi.size() == 0) maxId = 1;
-                else maxId = allOrderRvi.stream().max(Comparator.comparingInt(OrderRvi::getId)).get().getId();
-
-                orderRvi.setOrderNumber(s.getName().substring(0, 3) + String.format("%04d%n", maxId));
                 orderRvi.setPlu(entry.getKey().getPlu());
                 orderRvi.setProductNameRus(entry.getKey().getName());
                 orderRvi.setOrderCount(entry.getValue());
@@ -397,149 +382,34 @@ public class MainController {
                 orderRvi.setMetkaPromo(promoString);
                 Item t = entry.getKey();
                 orderRvi.setTz(tz.get(t));
-                orderRvi.setComment(String.valueOf(entry.getValue() / s.getPiecesInPallet())); // сколько палет этого товара
                 if (!allOrderRvi.contains(orderRvi)) orderRviService.save(orderRvi);
                 orderRviList.add(orderRvi);
             }
 
-
-            ArrayList<Str> allStr = new ArrayList<>(); // надо создать строки
-
-            if (carsCount > 12) { // 29
-                int k = 0; // сколько всего дней будут ехать 3
-                int day = carsCount / 10; // дней по 10 машин 2
-                int fin = carsCount % 10; // финальный заказ автомобилей. Мб 0; 9
-                if (fin != 0) k = day + 1;
-                else k = day;
-                for (int i = 0; i < k; i++) {
-                    int palletAdded = 0;
-                    if (i + 1 == k) {
-                        palletAdded = 32 * fin;
-                    } else palletAdded = 320;
-                    while (palletAdded != 0) { //
-
-                        int p = 0;
-                        for (Item it : itemPalletCount.keySet()) {
-                            p = p + itemPalletCount.get(it);
-                        }
-                        if (p == 0) {
-                            palletAdded = 0;
-                            break;
-                        }
-
-                        for (Item item : itemPalletCount.keySet()) {
-                            OrderRvi orderRvi = orderRviList.stream().filter(orderRvi1 -> orderRvi1.getPlu() == item.getPlu()).findFirst().get();
-                            if (itemPalletCount.get(item) != 0) {
-                                int palletCount = itemPalletCount.get(item);
-                                Str str = new Str();
-                                if (palletCount > palletAdded) {
-
-                                    itemPalletCount.put(item, palletCount - palletAdded);
-                                    str.setId(id);
-                                    str.setOrderNumber(orderRvi.getOrderNumber());
-                                    str.setSupplierName(orderRvi.getSupplierName());
-                                    str.setPlu(orderRvi.getPlu());
-                                    str.setProductNameRus(orderRvi.getProductNameRus());
-                                    str.setProductNameEng(orderRvi.getProductNameEng());
-                                    str.setOrderCount(palletAdded * s.getPiecesInPallet());
-                                    orderRvi.setOrderCount(orderRvi.getOrderCount() - (palletAdded * s.getPiecesInPallet()));
-                                    str.setWeekOfArrival(orderRvi.getWeekOfArrival() - k + i + 1);
-                                    str.setDestination(orderRvi.getDestination());
-                                    str.setPurposeOfOrder(orderRvi.getPurposeOfOrder());
-                                    str.setDateOrder(orderRvi.getDateOrder());
-                                    str.setMetkaPromo(orderRvi.getMetkaPromo());
-                                    str.setComment(orderRvi.getComment());
-                                    allStr.add(str);
-                                    id++;
-                                    palletAdded = 0;
-                                    break;
-//                                    заказать все и еще останется
-                                } else {
-//                                    заказать 320 остальные в следующую кучу
-                                    str.setId(id);
-                                    str.setOrderNumber(orderRvi.getOrderNumber());
-                                    str.setSupplierName(orderRvi.getSupplierName());
-                                    str.setPlu(orderRvi.getPlu());
-                                    str.setProductNameRus(orderRvi.getProductNameRus());
-                                    str.setProductNameEng(orderRvi.getProductNameEng());
-                                    str.setOrderCount(palletCount * s.getPiecesInPallet());
-                                    orderRvi.setOrderCount(0);
-                                    str.setWeekOfArrival(orderRvi.getWeekOfArrival() - k + i + 1);
-                                    str.setDestination(orderRvi.getDestination());
-                                    str.setPurposeOfOrder(orderRvi.getPurposeOfOrder());
-                                    str.setDateOrder(orderRvi.getDateOrder());
-                                    str.setMetkaPromo(orderRvi.getMetkaPromo());
-                                    str.setComment(orderRvi.getComment());
-                                    allStr.add(str);
-                                    id++;
-                                    palletAdded = palletAdded - palletCount;
-                                    itemPalletCount.put(item, 0);
-                                    id++;
-                                }
-                            }
-                        }
-                    }
-//                        в первый день и далее до конечного
-//                        надо заказать 320 паллет
-
-                }
-            } else {
-                for (OrderRvi orderRvi : orderRviList) {
-                    Str str = new Str();
-                    str.setId(id);
-                    str.setOrderNumber(orderRvi.getOrderNumber());
-                    str.setSupplierName(orderRvi.getSupplierName());
-                    str.setPlu(orderRvi.getPlu());
-                    str.setProductNameRus(orderRvi.getProductNameRus());
-                    str.setProductNameEng(orderRvi.getProductNameEng());
-                    str.setOrderCount(orderRvi.getOrderCount());
-                    str.setWeekOfArrival(orderRvi.getWeekOfArrival());
-                    str.setDestination(orderRvi.getDestination());
-                    str.setPurposeOfOrder(orderRvi.getPurposeOfOrder());
-                    str.setDateOrder(orderRvi.getDateOrder());
-                    str.setMetkaPromo(orderRvi.getMetkaPromo());
-                    str.setComment(orderRvi.getComment());
-                    allStr.add(str);
-                }
-            }
-
-            int maxWeekOfArrival = allStr.stream().max(Comparator.comparingInt(Str::getWeekOfArrival)).get().getWeekOfArrival();
-            int minWeekOfArrival = allStr.stream().min(Comparator.comparingInt(Str::getWeekOfArrival)).get().getWeekOfArrival();
-            ArrayList<Str> minWeekOfArrivalList = new ArrayList<>(allStr.stream().filter(str -> str.getWeekOfArrival() == minWeekOfArrival).collect(Collectors.toList()));
-            ArrayList<Str> maxWeekOfArrivalList = new ArrayList<>(allStr.stream().filter(str -> str.getWeekOfArrival() == maxWeekOfArrival).collect(Collectors.toList()));
-
-
-            for (Str str : allStr) {
+            for (OrderRvi orderRvi : orderRviList) {
                 r++;
                 Row rowData = sheet.createRow(r);
                 Cell cellSupplierName = rowData.createCell(1);
                 cellSupplierName.setCellValue(s.getName());
                 Cell cellPluNumber = rowData.createCell(2);
-                cellPluNumber.setCellValue(str.getPlu());
+                cellPluNumber.setCellValue(orderRvi.getPlu());
                 Cell cellPluName = rowData.createCell(3);
-                cellPluName.setCellValue(str.getProductNameRus());
+                cellPluName.setCellValue(orderRvi.getProductNameRus());
                 Cell cellOrderCount = rowData.createCell(5);
-                cellOrderCount.setCellValue(str.getOrderCount());
+                cellOrderCount.setCellValue(orderRvi.getOrderCount());
                 Cell cellDeliveryWeek = rowData.createCell(9);
-
-                if (minWeekOfArrivalList.contains(str))
-                    cellDeliveryWeek.setCellValue(maxWeekOfArrival);
-                else if (maxWeekOfArrivalList.contains(str))
-                    cellDeliveryWeek.setCellValue(minWeekOfArrival);
-                else
-                    cellDeliveryWeek.setCellValue(str.getWeekOfArrival());
-
+                cellDeliveryWeek.setCellValue(orderRvi.getWeekOfArrival());
                 Cell cellDestination = rowData.createCell(13);
-                cellDestination.setCellValue(str.getDestination());
+                cellDestination.setCellValue(orderRvi.getDestination());
                 Cell cellTarget = rowData.createCell(14);
-                cellTarget.setCellValue(str.getPurposeOfOrder());
+                cellTarget.setCellValue(orderRvi.getPurposeOfOrder());
                 Cell dateOrder = rowData.createCell(15);
-                dateOrder.setCellValue(str.getDateOrder());
+                dateOrder.setCellValue(orderRvi.getDateOrder());
                 Cell promo = rowData.createCell(16);
-                promo.setCellValue(str.getMetkaPromo());
+                promo.setCellValue(orderRvi.getMetkaPromo());
 
-//                    Cell cellComment = rowData.createCell(17);
-//                    cellComment.setCellValue(entry.getValue() / s.getPiecesInPallet() + " паллет");
+                Cell cellComment = rowData.createCell(17);
+                cellComment.setCellValue((orderRvi.getTz() * 7) + " дн. ТЗ");
 
             }
 
