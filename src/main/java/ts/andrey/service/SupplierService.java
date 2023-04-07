@@ -3,7 +3,7 @@ package ts.andrey.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ts.andrey.model.Supplier;
+import ts.andrey.entity.Supplier;
 import ts.andrey.repositories.SupplierRepository;
 
 import javax.transaction.Transactional;

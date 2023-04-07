@@ -1,78 +1,53 @@
-package ts.andrey.model;
+package ts.andrey.entity;
 
-import javax.persistence.*;
 import java.util.Objects;
 
-@Entity
-@Table(name = "OrderRvi")
-public class OrderRvi {
+public class Str {
 
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private int id;
 
-    @Column(name = "order_number")
     private String orderNumber;
 
-    @Column(name = "supplier_name")
     private String supplierName;
 
-    @Column(name = "plu_number")
     private int plu;
 
-    @Column(name = "product_name_rus")
     private String productNameRus;
 
-    @Column(name = "product_name_eng")
     private String productNameEng;
 
-    @Column(name = "order_count")
     private int orderCount;
 
-    @Column(name = "price")
     private String price;
 
-    @Column(name = "region_of_loading")
     private String regionOfLoading;
 
-    @Column(name = "Week_of_loading")
     private String weekOfLoading;
 
-    @Column(name = "Week_of_Arrival")
     private int weekOfArrival;
 
-    @Column(name = "ETD")
     private String etd;
 
-    @Column(name = "ETA")
     private String eta;
 
-    @Column(name = "CIF_FCA_DAP")
     private String cifFcaDap;
 
-    @Column(name = "Destination")
     private String destination;
 
-    @Column(name = "purpose_of_order")
     private String purposeOfOrder;
 
-    @Column(name = "date_Order")
     private String dateOrder;
 
-    @Column(name = "metka_promo")
     private String metkaPromo;
 
-    @Column(name = "comment")
     private String comment;
 
-    @Column(name = "tovar_zapas")
     private int tz;
 
-    public OrderRvi() {
+    public Str() {
     }
 
-    public OrderRvi(int id, String orderNumber, String supplierName, int plu, String productNameRus, String productNameEng, int orderCount, String price, String regionOfLoading, String weekOfLoading, int weekOfArrival, String etd, String eta, String cifFcaDap, String destination, String purposeOfOrder, String dateOrder, String metkaPromo, String comment, int tz) {
+    public Str(int id, String orderNumber, String supplierName, int plu, String productNameRus, String productNameEng, int orderCount, String price, String regionOfLoading, String weekOfLoading, int weekOfArrival, String etd, String eta, String cifFcaDap, String destination, String purposeOfOrder, String dateOrder, String metkaPromo, String comment, int tz) {
         this.id = id;
         this.orderNumber = orderNumber;
         this.supplierName = supplierName;
@@ -258,13 +233,13 @@ public class OrderRvi {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof OrderRvi)) return false;
-        OrderRvi orderRvi = (OrderRvi) o;
-        return getPlu() == orderRvi.getPlu() && getDateOrder().equals(orderRvi.getDateOrder());
+        if (!(o instanceof Str)) return false;
+        Str str = (Str) o;
+        return getId() == str.getId();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getPlu(), getDateOrder());
+        return Objects.hash(getId());
     }
 }

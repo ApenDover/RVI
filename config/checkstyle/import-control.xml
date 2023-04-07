@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC
+        "-//Puppy Crawl//DTD Import Control 1.4//EN"
+        "http://checkstyle.sourceforge.net/dtds/import_control_1_4.dtd">
+
+<import-control pkg="ts.andrey" strategyOnMismatch="allowed">
+
+    <subpackage name="base">
+        <allow pkg="ts\.andrey\.[.*]+" regex="true"/>
+        <allow pkg="ts\.andrey\.entity[.*]+" regex="true"/>
+<!--        <disallow pkg="org\.example\.[^.]+" regex="true"/>-->
+
+<!--        <subpackage name="data">-->
+<!--            <allow pkg="org\.example\.base\.(data|domain).*" regex="true"/>-->
+<!--            <disallow pkg="org\.example\.base\.presentation.*" regex="true"/>-->
+<!--        </subpackage>-->
+
+<!--        <subpackage name="presentation">-->
+<!--            <allow pkg="org\.example\.base\.(domain|presentation).*" regex="true"/>-->
+<!--            <disallow pkg="org\.example\.base\.data.*" regex="true"/>-->
+<!--        </subpackage>-->
+
+<!--        <subpackage name="domain">-->
+<!--            <allow pkg="org\.example\.base\.domain.*" regex="true"/>-->
+<!--            <disallow pkg="org\.example\.base\.(data|presentation).*" regex="true"/>-->
+<!--        </subpackage>-->
+    </subpackage>
+
+</import-control>

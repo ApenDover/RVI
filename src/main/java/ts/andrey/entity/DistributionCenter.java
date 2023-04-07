@@ -1,6 +1,13 @@
-package ts.andrey.model;
+package ts.andrey.entity;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.ManyToMany;
+import javax.persistence.CascadeType;
 import java.util.List;
 
 @Entity

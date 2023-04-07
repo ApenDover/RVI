@@ -3,12 +3,15 @@ package ts.andrey.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ts.andrey.model.Item;
-import ts.andrey.model.Supplier;
+import ts.andrey.entity.Item;
+import ts.andrey.entity.Supplier;
 import ts.andrey.repositories.ItemRepository;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.TreeSet;
 
 @Service
 @Transactional

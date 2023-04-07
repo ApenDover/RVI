@@ -3,7 +3,7 @@ package ts.andrey.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ts.andrey.model.OrderRvi;
+import ts.andrey.entity.OrderRvi;
 import ts.andrey.repositories.OrderRviRepository;
 
 import javax.transaction.Transactional;

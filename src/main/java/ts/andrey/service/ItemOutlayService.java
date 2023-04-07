@@ -2,8 +2,8 @@ package ts.andrey.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ts.andrey.model.Item;
-import ts.andrey.model.ItemOutlay;
+import ts.andrey.entity.Item;
+import ts.andrey.entity.ItemOutlay;
 import ts.andrey.repositories.ItemOutlayRepository;
 
 import javax.transaction.Transactional;

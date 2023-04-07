@@ -3,10 +3,10 @@ package ts.andrey.logic;
 import java.util.Calendar;
 import java.util.Date;
 
-public class NowWeekNumber {
+public class ThisWeekNumber {
     private int week;
 
-    public NowWeekNumber() {
+    public ThisWeekNumber() {
         Calendar c = Calendar.getInstance();
         c.setTime(new Date());
         week = c.get(Calendar.WEEK_OF_YEAR);
