@@ -15,27 +15,33 @@ import ts.andrey.service.SupplierService;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+
+import static ts.andrey.constants.Constants.WEEK_IN_YEAR;
 
 @Getter
-public class ReadExel {
-    private TreeSet<Supplier> supplierTreeSet;
-    private TreeSet<Item> itemTreeSet;
-    private TreeSet<ItemOutlay> itemOutlayTreeSet;
+public final class ReadExel {
+    private static TreeSet<Supplier> supplierTreeSet;
+    private static TreeSet<Item> itemTreeSet;
+    private static TreeSet<ItemOutlay> itemOutlayTreeSet;
+    private static int a = 0;
 
-    public ReadExel(String fileName, SupplierService supplierService, ItemService itemService) {
+    private ReadExel() {
+    }
 
+    public static void read(String fileName, SupplierService supplierService, ItemService itemService) {
         try {
-
             final var workbook = new XSSFWorkbook(fileName);
             final var titleNumberHashMap = readTitleList1(workbook);
             final var titleNumberHashMapList2 = readTitleList2(workbook);
-            this.supplierTreeSet = readSupplier(workbook, titleNumberHashMap, titleNumberHashMapList2);
-            this.itemTreeSet = readItem(workbook, titleNumberHashMap, supplierService);
-            this.itemOutlayTreeSet = readItemOutlay(workbook, titleNumberHashMap, itemService, supplierService);
+            supplierTreeSet = readSupplier(workbook, titleNumberHashMap, titleNumberHashMapList2);
+            itemTreeSet = readItem(workbook, titleNumberHashMap, supplierService);
+            itemOutlayTreeSet = readItemOutlay(workbook, titleNumberHashMap);
             workbook.close();
 
         } catch (Exception e) {
@@ -61,7 +67,8 @@ public class ReadExel {
             final var stockDC = (int) row.getCell(titleNumberHashMap.get("stockDC")).getNumericCellValue();
             final var stockStore = (int) row.getCell(titleNumberHashMap.get("stockStore")).getNumericCellValue();
 
-            final var supplier = supplierService.findByName(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue()); // по имени производителя?
+//            final var supplier = s.findByName(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue()); // по имени производителя?
+            final var supplier = supplierTreeSet.stream().filter(supplier1 -> supplier1.getName().equals(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue())).findFirst().get();
 
             List<DistributionCenter> distributionCenter = new ArrayList<>();
             List<ItemOutlay> itemOutlayList = new ArrayList<>();
@@ -107,30 +114,43 @@ public class ReadExel {
         return supplierArrayLists;
     }
 
-    private static TreeSet<ItemOutlay> readItemOutlay(Workbook wb, HashMap<String, Integer> titleNumberHashMap, ItemService itemService, SupplierService supplierService) {
+    private static TreeSet<ItemOutlay> readItemOutlay(Workbook wb, HashMap<String, Integer> titleNumberHashMap) {
         final var itemOutlayArrayList = new TreeSet<ItemOutlay>();
         final var sheet = wb.getSheetAt(0);
         int i = 4;
         while (sheet.getRow(i) != null) { //  от 4 до ниже
             final var row = sheet.getRow(i);
-            final var item = itemService.findOne((int) row.getCell(titleNumberHashMap.get("plu")).getNumericCellValue());
-            for (int k = 1; k < 54; k++) {
+            final var item = itemTreeSet
+                    .stream()
+                    .filter(item1 -> item1.getPlu() == ((int) row.getCell(titleNumberHashMap.get("plu"))
+                            .getNumericCellValue()))
+                    .findFirst().get();
+            for (int k = 1; k < WEEK_IN_YEAR + 1; k++) {
                 if (titleNumberHashMap.containsKey("outlayCount" + k)) {
                     int outlayCount = (int) row.getCell(titleNumberHashMap.get("outlayCount" + k)).getNumericCellValue();
                     int deliveryCount = (int) row.getCell(titleNumberHashMap.get("deliveryCount" + k)).getNumericCellValue();
-                    final var itemOutlay = new ItemOutlay(k, outlayCount, deliveryCount, item);
+
+                    final var deliveryWeek = Collections.min(itemTreeSet
+                            .stream()
+                            .filter(item1 -> item1.getDeliveryWeek() != 0
+                                    && item1.getSupplier().getName().equals(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue())
+                                    && item1.getStatus().equals("Активная"))
+                            .collect(Collectors.toSet()).stream().map(Item::getDeliveryWeek)
+                            .collect(Collectors.toList()));
+                    a++;
+                    final var itemOutlay = new ItemOutlay(a, k, outlayCount, deliveryCount, item);
                     itemOutlayArrayList.add(itemOutlay);
 
-                    final var deliveryWeek = itemService.findMinDeliveryWeek(supplierService.findByName(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue()));
+//                    final var deliveryWeek = itemService.findMinDeliveryWeek(supplierService.findByName(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue()));
                     final var lt = (int) row.getCell(titleNumberHashMap.get("lt")).getNumericCellValue();
 
                     if (!item.isPromo()) {
-                        if ((deliveryWeek + lt) < 54 & k >= deliveryWeek & k <= deliveryWeek + lt) {
+                        if ((deliveryWeek + lt) < WEEK_IN_YEAR + 1 & k >= deliveryWeek & k <= deliveryWeek + lt) {
                             final var promo = (int) row.getCell(titleNumberHashMap.get("promo" + k)).getNumericCellValue();
                             if (promo > 0) item.setPromo(true);
                         }
-                        if ((deliveryWeek + lt) > 53) {
-                            final var step = deliveryWeek + lt - 52;
+                        if ((deliveryWeek + lt) > WEEK_IN_YEAR) {
+                            final var step = deliveryWeek + lt - WEEK_IN_YEAR - 2;
                             if (k < step | k >= deliveryWeek) {
                                 final var promo = (int) row.getCell(titleNumberHashMap.get("promo" + k)).getNumericCellValue();
                                 if (promo > 0) item.setPromo(true);
@@ -194,18 +214,15 @@ public class ReadExel {
                     break;
                 case NUMERIC:
                 case FORMULA:
-                    if (i > 46 & i < 100) // outlayCount СМ
-                    {
+                    if (i > 46 & i < 100) {
                         int rez = (int) cell.getNumericCellValue();
                         titleNumberHashMap.put("outlayCount" + rez, i);
                     }
-                    if (i > 152 & i < 206) // deliveryCount СМ
-                    {
+                    if (i > 152 & i < 206) {
                         int rez = (int) cell.getNumericCellValue();
                         titleNumberHashMap.put("deliveryCount" + rez, i);
                     }
-                    if (i > 258 & i < 312) // deliveryCount СМ
-                    {
+                    if (i > 258 & i < 312) {
                         int rez = (int) cell.getNumericCellValue();
                         titleNumberHashMap.put("promo" + rez, i);
                     }
@@ -248,5 +265,16 @@ public class ReadExel {
         }
     }
 
+    public static TreeSet<Supplier> getSupplierTreeSet() {
+        return supplierTreeSet;
+    }
+
+    public static TreeSet<Item> getItemTreeSet() {
+        return itemTreeSet;
+    }
+
+    public static TreeSet<ItemOutlay> getItemOutlayTreeSet() {
+        return itemOutlayTreeSet;
+    }
 }
 

@@ -1,7 +1,6 @@
 package ts.andrey.entity;
 
-import org.hibernate.annotations.CascadeType;
-
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

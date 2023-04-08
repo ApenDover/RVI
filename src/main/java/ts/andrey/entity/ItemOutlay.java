@@ -31,7 +31,7 @@ public class ItemOutlay implements Comparable<ItemOutlay> {
     @JoinColumn(name = "item_plu", referencedColumnName = "plu")
     private Item itemPlu;
 
-    public ItemOutlay(int week, int outlayCount, int deliveryCount, Item itemPlu) {
+    public ItemOutlay(int id, int week, int outlayCount, int deliveryCount, Item itemPlu) {
         this.id = id;
         this.week = week;
         this.outlayCount = outlayCount;

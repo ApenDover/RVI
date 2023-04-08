@@ -265,11 +265,11 @@ public class OrderRvi {
         if (this == o) return true;
         if (!(o instanceof OrderRvi)) return false;
         OrderRvi orderRvi = (OrderRvi) o;
-        return getPlu() == orderRvi.getPlu() && getDateOrder().equals(orderRvi.getDateOrder());
+        return getPlu() == orderRvi.getPlu() && getOrderCount() == orderRvi.getOrderCount() && getWeekOfArrival() == orderRvi.getWeekOfArrival() && getTz() == orderRvi.getTz() && Objects.equals(getOrderNumber(), orderRvi.getOrderNumber()) && Objects.equals(getSupplierName(), orderRvi.getSupplierName()) && Objects.equals(getProductNameRus(), orderRvi.getProductNameRus()) && Objects.equals(getProductNameEng(), orderRvi.getProductNameEng()) && Objects.equals(getPrice(), orderRvi.getPrice()) && Objects.equals(getRegionOfLoading(), orderRvi.getRegionOfLoading()) && Objects.equals(getWeekOfLoading(), orderRvi.getWeekOfLoading()) && Objects.equals(getEtd(), orderRvi.getEtd()) && Objects.equals(getEta(), orderRvi.getEta()) && Objects.equals(getCifFcaDap(), orderRvi.getCifFcaDap()) && Objects.equals(getDestination(), orderRvi.getDestination()) && Objects.equals(getPurposeOfOrder(), orderRvi.getPurposeOfOrder()) && Objects.equals(getDateOrder(), orderRvi.getDateOrder()) && Objects.equals(getMetkaPromo(), orderRvi.getMetkaPromo()) && Objects.equals(getComment(), orderRvi.getComment());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getPlu(), getDateOrder());
+        return Objects.hash(getOrderNumber(), getSupplierName(), getPlu(), getProductNameRus(), getProductNameEng(), getOrderCount(), getPrice(), getRegionOfLoading(), getWeekOfLoading(), getWeekOfArrival(), getEtd(), getEta(), getCifFcaDap(), getDestination(), getPurposeOfOrder(), getDateOrder(), getMetkaPromo(), getComment(), getTz());
     }
 }

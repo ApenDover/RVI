@@ -5,7 +5,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ts.andrey.DAO.ItemDAO;
 import ts.andrey.entity.Item;
 import ts.andrey.entity.ItemOutlay;
 import ts.andrey.entity.OrderRvi;
@@ -22,6 +21,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,7 +31,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-;
+import static ts.andrey.constants.Constants.CRITICAL_TOVAR_ZAPAS;
+import static ts.andrey.constants.Constants.DAYS_IN_A_WEEK;
+import static ts.andrey.constants.Constants.PALLET_TO_ED_COUNT;
+import static ts.andrey.constants.Constants.WEEK_IN_YEAR;
 
 @Component
 public class CountAll {
@@ -40,7 +43,6 @@ public class CountAll {
     private ItemService itemService;
     private SupplierService supplierService;
     private OrderRviService orderRviService;
-    private ItemDAO itemDAO;
     private int orderPalletCount = 0;
     private int firstWeek = 0;
     private int lastWeek = 0;
@@ -49,14 +51,18 @@ public class CountAll {
     private HashMap<Item, Integer> specialQuantumSupplier = new HashMap<>();
     private HashMap<Item, Integer> tz = new HashMap<>();
 
+    private static TreeSet<Supplier> supplierTreeSet;
+    private static TreeSet<Item> itemTreeSet;
+    private static TreeSet<ItemOutlay> itemOutlayTreeSet;
+    private static ArrayList<OrderRvi> orderRviTreeSet = new ArrayList<>();
+
     @Autowired
-    public CountAll(DistributionCenterService distributionCenterService, ItemOutlayService itemOutlayService, ItemService itemService, SupplierService supplierService, OrderRviService orderRviService, ItemDAO itemDAO) {
+    public CountAll(DistributionCenterService distributionCenterService, ItemOutlayService itemOutlayService, ItemService itemService, SupplierService supplierService, OrderRviService orderRviService) {
         this.distributionCenterService = distributionCenterService;
         this.itemOutlayService = itemOutlayService;
         this.itemService = itemService;
         this.supplierService = supplierService;
         this.orderRviService = orderRviService;
-        this.itemDAO = itemDAO;
     }
 
     public HashMap<Supplier, HashMap<Item, Integer>> count(String exelPath) {
@@ -66,21 +72,13 @@ public class CountAll {
 //        itemService.removeAll();
 //        itemOutlayService.removeAll();
 
-        final var readExel = new ReadExel(exelPath, supplierService, itemService); // тут создал все объекты
+        ReadExel.read(exelPath, supplierService, itemService); // тут создал все объекты
 
-        final var allSupplier = supplierService.findAll();
-        readExel.getSupplierTreeSet().forEach(supplier -> {
-            if (!allSupplier.contains(supplier)) {
-                supplierService.save(supplier);
-            }
-        });
+        supplierTreeSet = ReadExel.getSupplierTreeSet();
+        itemTreeSet = ReadExel.getItemTreeSet();
+        itemOutlayTreeSet = ReadExel.getItemOutlayTreeSet();
 
-        readExel.getItemTreeSet().forEach(itemService::save);
-
-        readExel.getItemOutlayTreeSet().forEach(itemOutlay -> {
-            itemOutlay.setId(1);
-            itemOutlayService.save(itemOutlay);
-        });
+        final var allSupplier = ReadExel.getSupplierTreeSet();
 
         final var finPackage = new HashMap<Supplier, HashMap<Item, Integer>>();
 
@@ -90,7 +88,7 @@ public class CountAll {
             firstWeek = 0;
             countPalletNeeded = 0; // сколько палет осталось до кванта
 
-            final var allItemsSupplier = new TreeSet<>(itemService.findAllBySupplier(supplier)); // << достаем все товары поставщика
+            final var allItemsSupplier = itemTreeSet.stream().filter(item -> item.getSupplier().equals(supplier)).collect(Collectors.toSet()); // << достаем все товары поставщика
 
             final var item = allItemsSupplier
                     .stream()
@@ -102,7 +100,7 @@ public class CountAll {
                 firstWeek = item.getOrderWeek();
                 lastWeek = item.getDeliveryWeek();
 
-                final var itemStockHashMap = new HashMap<>(tovarZapas(allItemsSupplier));// << считаем товарный запас для каждого товара
+                final var itemStockHashMap = new HashMap<>(tovarZapas(allItemsSupplier, itemOutlayTreeSet)); // << считаем товарный запас для каждого товара
                 tz.putAll(itemStockHashMap);
 
 //                System.out.println(" ############# ");
@@ -113,13 +111,14 @@ public class CountAll {
 
 
                 itemStockHashMap.forEach((it, integer) -> {
-                    if (integer * 7 >= 150) {
+                    if (integer * DAYS_IN_A_WEEK >= CRITICAL_TOVAR_ZAPAS) {
                         removed.add(item);
                     }
                 });
 
-
-                final var allOrderWeek = new TreeSet<>(itemDAO.allOrderWeek(supplier)); // << отсортированные все недели на которых рекомендован заказ
+//                SELECT DISTINCT order_week from item where supplier_id = ? and order_week >= ?;
+//                final var allOrderWeek = new TreeSet<>(itemDAO.allOrderWeek(supplier)); // << отсортированные все недели на которых рекомендован заказ
+                final var allOrderWeek = itemTreeSet.stream().filter(item1 -> item1.getSupplier().equals(supplier)).map(Item::getOrderWeek).collect(Collectors.toCollection(TreeSet::new));
 
                 final var supplierPackage = new HashMap<Item, Integer>();
 
@@ -147,7 +146,7 @@ public class CountAll {
 
                 if (countPalletNeeded > 0) {
                     while (countPalletNeeded > 0) {
-                        final var itemStockHashMapAddOne = new HashMap<>(tovarZapas(allItemsSupplier)); // << считаем товарный запас для каждого товара добавив квант к рекомендованному заказу
+                        final var itemStockHashMapAddOne = new HashMap<>(tovarZapas(allItemsSupplier, itemOutlayTreeSet)); // << считаем товарный запас для каждого товара добавив квант к рекомендованному заказу
 
                         final var minTzItem = itemStockHashMapAddOne.entrySet()
                                 .stream()
@@ -159,7 +158,7 @@ public class CountAll {
                         minTzItem.setRecommendedOrder(minTzItem.getRecommendedOrder() + minTzItem.getQuantum()); // добавляем 1 квант товара
                         if (supplierPackage.containsKey(minTzItem)) {
                             final var orderCount = supplierPackage.get(minTzItem);
-                            if (supplier.getMinOrder() > 500) {
+                            if (supplier.getMinOrder() > PALLET_TO_ED_COUNT) {
 //                                System.out.println("добавляю " +  minTzItem.getQuantum());
                                 supplierPackage.put(minTzItem, orderCount + minTzItem.getQuantum());
                                 orderPalletCount = orderPalletCount + minTzItem.getQuantum();
@@ -171,7 +170,7 @@ public class CountAll {
                                 countPalletNeeded = countPalletNeeded - 1;
                             }
                         } else {
-                            if (supplier.getMinOrder() > 500) {
+                            if (supplier.getMinOrder() > PALLET_TO_ED_COUNT) {
 //                                System.out.println("добавляю " +  minTzItem.getQuantum());
                                 supplierPackage.put(minTzItem, minTzItem.getQuantum());
                                 orderPalletCount = orderPalletCount + minTzItem.getQuantum();
@@ -200,7 +199,19 @@ public class CountAll {
 
         final var supplierPackage = new HashMap<Item, Integer>(); // << создаем корзину
 
-        final var itemSet = new TreeSet<>(itemService.findAllByOrderWeekAndSupplier(orderWeek, supplier)); //  <<  берем все товары на данной неделе для поставщика
+//        public List<Item> findAllByOrderWeekAndSupplier(int orderWeek, Supplier supplier) {
+//            return itemRepository.findItemsByOrderWeekAndSupplierAndStatusIs(orderWeek, supplier, "Активная");
+//        }
+
+//        final var itemSet = new TreeSet<>(itemService.findAllByOrderWeekAndSupplier(orderWeek, supplier)); //  <<  берем все товары на данной неделе для поставщика
+
+        final var itemSet = itemTreeSet
+                .stream()
+                .filter(item -> item.getSupplier().equals(supplier)
+                        && item.getStatus().equals("Активная")
+                        && item.getOrderWeek() == orderWeek).
+                collect(Collectors.toSet());
+
         // расчет заказа для текущей недели
 
         if (new ThisWeekNumber().getWeek() == orderWeek) {
@@ -213,7 +224,7 @@ public class CountAll {
 
                 final var orderCount = item.getRecommendedOrderRound() / item.getQuantum(); // << количество к заказу палетов в большую сторону
 
-                if (supplier.getMinOrder() > 500) {
+                if (supplier.getMinOrder() > PALLET_TO_ED_COUNT) {
                     // нужно все переводить в штуки
                     specialQuantumSupplier.put(item, supplier.getMinOrder() / item.getQuantum());
                     supplierPackage.put(item, orderCount);
@@ -264,14 +275,13 @@ public class CountAll {
         }
 //        System.out.println("Всего добавлено: " + orderPalletCount + "/" + supplier.getMinOrder());
 //        System.out.println("До кванта еще " + countPalletNeeded);
-        if (countPalletNeeded == 7355)
-            System.out.println();
+
         return supplierPackage;
 
     }
 
     // Считаем для каждого товара товарный запас. Нужно для плавной догрузки в квант.
-    private HashMap<Item, Integer> tovarZapas(Set<Item> itemSet) {
+    private HashMap<Item, Integer> tovarZapas(Set<Item> itemSet, TreeSet<ItemOutlay> itemOutlayTreeSet) {
 
         final var itemStockHashMap = new LinkedHashMap<Item, Integer>();
         var checkEmptyWeekOrder = false;
@@ -280,13 +290,37 @@ public class CountAll {
             if (!(firstWeek == lastWeek & lastWeek == 0)) {
                 checkEmptyWeekOrder = true;
                 if (firstWeek < lastWeek) { // если все в пределах года
-                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, firstWeek, lastWeek + 1)));
+                    itemOutlayListPlu.addAll(itemOutlayTreeSet
+                            .stream()
+                            .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                                    && itemOutlay.getWeek() > firstWeek
+                                    && itemOutlay.getWeek() < lastWeek + 1)
+                            .collect(Collectors.toSet()));
+//                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, firstWeek, lastWeek + 1)));
                 } else { // если затрагиваем следующий год
-                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, firstWeek, 54)));
-                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, lastWeek + 1)));
+                    itemOutlayListPlu.addAll(itemOutlayTreeSet
+                            .stream()
+                            .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                                    && itemOutlay.getWeek() > firstWeek
+                                    && itemOutlay.getWeek() < WEEK_IN_YEAR + 1)
+                            .collect(Collectors.toSet()));
+//                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, firstWeek, WEEK_IN_YEAR + 1)));
+                    itemOutlayListPlu.addAll(itemOutlayTreeSet
+                            .stream()
+                            .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                                    && itemOutlay.getWeek() > 0
+                                    && itemOutlay.getWeek() < lastWeek + 1)
+                            .collect(Collectors.toSet()));
+//                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, lastWeek + 1)));
                 }
             } else {
-                itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, 54)));
+//                itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, WEEK_IN_YEAR + 1)));
+                itemOutlayListPlu.addAll(itemOutlayTreeSet
+                        .stream()
+                        .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                                && itemOutlay.getWeek() > 0
+                                && itemOutlay.getWeek() < WEEK_IN_YEAR + 1)
+                        .collect(Collectors.toSet()));
             }
             var i = 0; // просчитанный номер недели
             var i2 = 0; // просчитанный номер недели 2 этап - товарный запас, < 150
@@ -303,9 +337,14 @@ public class CountAll {
 
             t = t + item.getRecommendedOrderRound();
 
-            final var allActual = new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, 54));
-            final var allActualAfter = allActual.stream().filter(itemOutlay -> itemOutlay.getWeek() > lastWeek).collect(Collectors.toCollection(TreeSet::new));
-            final var allActualBefore = allActual.stream().filter(itemOutlay -> itemOutlay.getWeek() < lastWeek).collect(Collectors.toCollection(TreeSet::new));
+//            final var allActual = new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, 54));
+
+            final var allActual = itemOutlayTreeSet.stream().filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)).collect(Collectors.toSet());
+
+            final var allActualAfter = allActual.stream().filter(itemOutlay -> itemOutlay.getWeek() > lastWeek)
+                    .collect(Collectors.toCollection(TreeSet::new));
+            final var allActualBefore = allActual.stream().filter(itemOutlay -> itemOutlay.getWeek() < lastWeek)
+                    .collect(Collectors.toCollection(TreeSet::new));
             if (checkEmptyWeekOrder) {
                 for (ItemOutlay io : allActual) {
                     result = result + io.getOutlayCount() - io.getDeliveryCount();
@@ -347,12 +386,15 @@ public class CountAll {
 
     public void writeExel(String path, HashMap<Supplier, HashMap<Item, Integer>> result) throws IOException {
 
-        final var allOrderRvi = new ArrayList<>(orderRviService.findAll());
+//        final var allOrderRvi = new ArrayList<>(orderRviService.findAll());
 
         final var workbook = new XSSFWorkbook();
         final var sheet = workbook.createSheet("order");
         final var row = sheet.createRow(0);
-        final var orderTitlesArray = new String[]{"ORDER NUMBER", "NAME OF SUPPLIER", "PLU Number", "PRODUCT NAME IN RUSSIAN", "PRODUCT NAME IN ENGLISH", "ORDER (Q-TY)", "Price ", "REGION OF loading", "Week of loading", "Week of Arrival", "ETD", "ETA", "CIF/FCA/DAP", "Destination", "Цель закупки", "Дата заказа", "Метка промо", "Комментарий"};
+        final var orderTitlesArray = new String[]{"ORDER NUMBER", "NAME OF SUPPLIER",
+                "PLU Number", "PRODUCT NAME IN RUSSIAN", "PRODUCT NAME IN ENGLISH",
+                "ORDER (Q-TY)", "Price ", "REGION OF loading", "Week of loading", "Week of Arrival",
+                "ETD", "ETA", "CIF/FCA/DAP", "Destination", "Цель закупки", "Дата заказа", "Метка промо", "Комментарий"};
         for (int i = 0; i < orderTitlesArray.length; i++) {
             Cell cell = row.createCell(i);
             cell.setCellValue(orderTitlesArray[i]);
@@ -362,9 +404,23 @@ public class CountAll {
 
         for (Supplier s : result.keySet()) {// перебираем всех поставщиков результата
 
-            final var orderRviList = new ArrayList<OrderRvi>();
+//            final var orderRviList = new ArrayList<OrderRvi>();
 
-            final var deliveryWeek = itemService.findMinDeliveryWeek(s);
+//            final var deliveryWeek = itemService.findMinDeliveryWeek(s);
+
+            itemTreeSet.removeAll(itemTreeSet
+                    .stream()
+                    .filter(item -> item.getDeliveryWeek() == 0)
+                    .collect(Collectors.toSet()));
+
+            final var deliveryWeek = Collections.min(itemTreeSet
+                    .stream()
+                    .filter(item ->
+                            item.getSupplier().equals(s))
+                    .collect(Collectors.toSet())
+                    .stream()
+                    .map(Item::getDeliveryWeek)
+                    .collect(Collectors.toSet()));
 
             for (Map.Entry<Item, Integer> entry : result.get(s).entrySet()) { // записываем в базу общий заказ
                 DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
@@ -385,11 +441,11 @@ public class CountAll {
                 orderRvi.setMetkaPromo(promoString);
                 Item t = entry.getKey();
                 orderRvi.setTz(tz.get(t));
-                if (!allOrderRvi.contains(orderRvi)) orderRviService.save(orderRvi);
-                orderRviList.add(orderRvi);
+//                if (!allOrderRvi.contains(orderRvi)) orderRviService.save(orderRvi);
+                orderRviTreeSet.add(orderRvi);
             }
 
-            for (OrderRvi orderRvi : orderRviList) {
+            for (OrderRvi orderRvi : orderRviTreeSet) {
                 r++;
                 Row rowData = sheet.createRow(r);
                 final var cellSupplierName = rowData.createCell(1);
@@ -411,9 +467,9 @@ public class CountAll {
                 final var promo = rowData.createCell(16);
                 promo.setCellValue(orderRvi.getMetkaPromo());
                 final var cellComment = rowData.createCell(17);
-                cellComment.setCellValue((orderRvi.getTz() * 7) + " дн. ТЗ");
-
+                cellComment.setCellValue((orderRvi.getTz() * DAYS_IN_A_WEEK) + " дн. ТЗ");
             }
+            orderRviTreeSet.clear();
 
         }
         ReadExel.writeWorkbook(workbook, path);

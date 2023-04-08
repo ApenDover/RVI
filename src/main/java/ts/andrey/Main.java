@@ -21,7 +21,9 @@ public class Main {
         final var context = SpringApplication.run(Main.class, args);
         final var countAll = context.getBean(CountAll.class);
 
-        final var result = countAll.count("/Users/andrey/Downloads/RVI-justCount.xlsx"); // путь к основной табличке
+        System.out.println();
+
+        final var result = countAll.count("/Users/andrey/Downloads/RVI.xlsx"); // путь к основной табличке
 //        final var result = countAll.main(args[0]); // путь к основной табличке
 
         final var actualResult = palletToPieces(result);
