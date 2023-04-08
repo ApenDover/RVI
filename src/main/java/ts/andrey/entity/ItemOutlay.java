@@ -1,5 +1,7 @@
 package ts.andrey.entity;
 
+import lombok.Getter;
+
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Id;
@@ -14,6 +16,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 
+@Getter
 @Entity
 @Table(name = "Item_outlay")
 public class ItemOutlay implements Comparable<ItemOutlay> {
@@ -29,66 +32,22 @@ public class ItemOutlay implements Comparable<ItemOutlay> {
     private int deliveryCount;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "item_plu", referencedColumnName = "plu")
-    private Item itemPlu;
+    private Item item;
 
-    public ItemOutlay(int id, int week, int outlayCount, int deliveryCount, Item itemPlu) {
+    public ItemOutlay(int id, int week, int outlayCount, int deliveryCount, Item item) {
         this.id = id;
         this.week = week;
         this.outlayCount = outlayCount;
         this.deliveryCount = deliveryCount;
-        this.itemPlu = itemPlu;
+        this.item = item;
     }
 
     public ItemOutlay() {
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getOutlayCount() {
-        return outlayCount;
-    }
-
-    public void setOutlayCount(int outlayCount) {
-        this.outlayCount = outlayCount;
-    }
-
-    public int getDeliveryCount() {
-        return deliveryCount;
-    }
-
-    public void setDeliveryCount(int deliveryCount) {
-        this.deliveryCount = deliveryCount;
-    }
-
-    public Item getItemPlu() {
-        return itemPlu;
-    }
-
-    public int getItemP(){
-        return getItemPlu().getPlu();
-    }
-
-    public void setItemPlu(Item itemPlu) {
-        this.itemPlu = itemPlu;
-    }
-
-    public int getWeek() {
-        return week;
-    }
-
-    public void setWeek(int week) {
-        this.week = week;
-    }
-
     @Override
     public int compareTo(ItemOutlay o) {
-        return Comparator.comparing(ItemOutlay::getItemP).thenComparing(ItemOutlay::getWeek).compare(this, o);
+        return Comparator.comparing(ItemOutlay::getItem).thenComparing(ItemOutlay::getWeek).compare(this, o);
     }
 
     @Override
@@ -96,11 +55,11 @@ public class ItemOutlay implements Comparable<ItemOutlay> {
         if (this == o) return true;
         if (!(o instanceof ItemOutlay)) return false;
         ItemOutlay that = (ItemOutlay) o;
-        return getWeek() == that.getWeek() && getItemPlu().equals(that.getItemPlu());
+        return getWeek() == that.getWeek() && getItem().equals(that.getItem());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getWeek(), getItemPlu());
+        return Objects.hash(getId(), getWeek(), getItem());
     }
 }

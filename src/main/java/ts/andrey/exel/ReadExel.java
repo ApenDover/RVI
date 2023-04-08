@@ -1,6 +1,5 @@
 package ts.andrey.exel;
 
-import lombok.Getter;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -24,12 +23,11 @@ import java.util.stream.Collectors;
 
 import static ts.andrey.constants.Constants.WEEK_IN_YEAR;
 
-@Getter
 public final class ReadExel {
     private static TreeSet<Supplier> supplierTreeSet;
     private static TreeSet<Item> itemTreeSet;
     private static TreeSet<ItemOutlay> itemOutlayTreeSet;
-    private static int a = 0;
+    private static int itemId = 0;
 
     private ReadExel() {
     }
@@ -101,12 +99,14 @@ public final class ReadExel {
             final var row = sheet.getRow(i);
             final var name = row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue();
             final var minOrder = (int) supplierMinOrder.get(name);
-//            int piecesInPallet = supplierPiecesInPallet.get(name);
             int lt = (int) row.getCell(titleNumberHashMap.get("lt")).getNumericCellValue();
 
-            List<Item> itemList = new ArrayList<>();
+            final var supplier = new Supplier();
+            supplier.setName(name);
+            supplier.setMinOrder(minOrder);
+            supplier.setLt(lt);
+            supplier.setSupplyWay(false);
 
-            Supplier supplier = new Supplier(name, minOrder, null, false, lt, itemList);
             i++;
 
             supplierArrayLists.add(supplier);
@@ -137,8 +137,8 @@ public final class ReadExel {
                                     && item1.getStatus().equals("Активная"))
                             .collect(Collectors.toSet()).stream().map(Item::getDeliveryWeek)
                             .collect(Collectors.toList()));
-                    a++;
-                    final var itemOutlay = new ItemOutlay(a, k, outlayCount, deliveryCount, item);
+                    itemId++;
+                    final var itemOutlay = new ItemOutlay(itemId, k, outlayCount, deliveryCount, item);
                     itemOutlayArrayList.add(itemOutlay);
 
 //                    final var deliveryWeek = itemService.findMinDeliveryWeek(supplierService.findByName(row.getCell(titleNumberHashMap.get("supplierName")).getStringCellValue()));

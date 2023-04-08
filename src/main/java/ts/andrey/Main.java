@@ -23,14 +23,14 @@ public class Main {
 
         System.out.println();
 
-        final var result = countAll.count("/Users/andrey/Downloads/RVI.xlsx"); // путь к основной табличке
-//        final var result = countAll.main(args[0]); // путь к основной табличке
+//        final var result = countAll.count("/Users/andrey/Downloads/RVI.xlsx"); // путь к основной табличке
+        final var result = countAll.count(args[0]); // путь к основной табличке
 
         final var actualResult = palletToPieces(result);
 
         try {
-//            countAll.writeExel(args[1], actualResult); // куда сохранять заказ
-            countAll.writeExel("/Users/andrey/Downloads/ORDER.xlsx", actualResult); // куда сохранять заказ
+            countAll.writeExel(args[1], actualResult); // куда сохранять заказ
+//            countAll.writeExel("/Users/andrey/Downloads/ORDER.xlsx", actualResult); // куда сохранять заказ
 
         } catch (IOException e) {
             System.out.println(e.getMessage() + " - " + Arrays.toString(e.getStackTrace()));

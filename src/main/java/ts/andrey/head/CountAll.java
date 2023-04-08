@@ -134,10 +134,8 @@ public class CountAll {
                             supplierPackage.put(it, integer);
                         }
                     });
-
                 }
 
-                supplierPackage.size();
 
                 HashMap<Item, Integer> memoryItemBeforeAddRecommendedOrder = new HashMap<>();
                 allItemsSupplier.forEach(it -> {
@@ -183,7 +181,6 @@ public class CountAll {
                             }
                         }
                         minTzItem.setRecommendedOrder(minTzItem.getRecommendedOrder() + minTzItem.getQuantum());
-//                        addToPackage = addToPackage + (orderPalletCount - beforeAdd);
                     }
                 }
                 finPackage.put(supplier, supplierPackage); // << кладем в корзину исходя из недели и кванта поставщика
@@ -292,7 +289,7 @@ public class CountAll {
                 if (firstWeek < lastWeek) { // если все в пределах года
                     itemOutlayListPlu.addAll(itemOutlayTreeSet
                             .stream()
-                            .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                            .filter(itemOutlay -> itemOutlay.getItem().equals(item)
                                     && itemOutlay.getWeek() > firstWeek
                                     && itemOutlay.getWeek() < lastWeek + 1)
                             .collect(Collectors.toSet()));
@@ -300,14 +297,14 @@ public class CountAll {
                 } else { // если затрагиваем следующий год
                     itemOutlayListPlu.addAll(itemOutlayTreeSet
                             .stream()
-                            .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                            .filter(itemOutlay -> itemOutlay.getItem().equals(item)
                                     && itemOutlay.getWeek() > firstWeek
                                     && itemOutlay.getWeek() < WEEK_IN_YEAR + 1)
                             .collect(Collectors.toSet()));
 //                    itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, firstWeek, WEEK_IN_YEAR + 1)));
                     itemOutlayListPlu.addAll(itemOutlayTreeSet
                             .stream()
-                            .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                            .filter(itemOutlay -> itemOutlay.getItem().equals(item)
                                     && itemOutlay.getWeek() > 0
                                     && itemOutlay.getWeek() < lastWeek + 1)
                             .collect(Collectors.toSet()));
@@ -317,7 +314,7 @@ public class CountAll {
 //                itemOutlayListPlu.addAll(new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, WEEK_IN_YEAR + 1)));
                 itemOutlayListPlu.addAll(itemOutlayTreeSet
                         .stream()
-                        .filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)
+                        .filter(itemOutlay -> itemOutlay.getItem().equals(item)
                                 && itemOutlay.getWeek() > 0
                                 && itemOutlay.getWeek() < WEEK_IN_YEAR + 1)
                         .collect(Collectors.toSet()));
@@ -339,7 +336,7 @@ public class CountAll {
 
 //            final var allActual = new TreeSet<>(itemOutlayService.findAllByItemPlu(item, 0, 54));
 
-            final var allActual = itemOutlayTreeSet.stream().filter(itemOutlay -> itemOutlay.getItemPlu().equals(item)).collect(Collectors.toSet());
+            final var allActual = itemOutlayTreeSet.stream().filter(itemOutlay -> itemOutlay.getItem().equals(item)).collect(Collectors.toSet());
 
             final var allActualAfter = allActual.stream().filter(itemOutlay -> itemOutlay.getWeek() > lastWeek)
                     .collect(Collectors.toCollection(TreeSet::new));

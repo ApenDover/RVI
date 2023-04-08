@@ -1,5 +1,10 @@
 package ts.andrey.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
@@ -13,6 +18,10 @@ import javax.persistence.Id;
 import java.util.List;
 import java.util.Objects;
 
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
 @Entity
 @Table(name = "Item")
 public class Item implements Comparable<Item> {
@@ -50,159 +59,13 @@ public class Item implements Comparable<Item> {
             inverseJoinColumns = @JoinColumn(name = "distribution_center_id", referencedColumnName = "id"))
     private List<DistributionCenter> distributionCenterList;
 
-    @OneToMany(mappedBy = "itemPlu", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<ItemOutlay> itemOutlayList;
-
-    public Item(int plu, Supplier supplier, String status, String name, int quantum, int countStore, Integer orderWeek, Integer deliveryWeek, Integer recommendedOrder, int stockDC, int stockStore, boolean promo, List<DistributionCenter> distributionCenterList, List<ItemOutlay> itemOutlayList) {
-        this.plu = plu;
-        this.supplier = supplier;
-        this.status = status;
-        this.name = name;
-        this.quantum = quantum;
-        this.countStore = countStore;
-        this.orderWeek = orderWeek;
-        this.deliveryWeek = deliveryWeek;
-        this.recommendedOrder = recommendedOrder;
-        this.stockDC = stockDC;
-        this.stockStore = stockStore;
-        this.promo = promo;
-        this.distributionCenterList = distributionCenterList;
-        this.itemOutlayList = itemOutlayList;
-    }
-
-    public Item() {
-    }
-
-    public int getPlu() {
-        return plu;
-    }
-
-    public void setPlu(int plu) {
-        this.plu = plu;
-    }
-
-    public Supplier getSupplier() {
-        return supplier;
-    }
-
-    public void setSupplier(Supplier supplier) {
-        this.supplier = supplier;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getQuantum() {
-        return quantum;
-    }
-
-    public void setQuantum(int quantum) {
-        this.quantum = quantum;
-    }
-
-    public int getCountStore() {
-        return countStore;
-    }
-
-    public void setCountStore(int countStore) {
-        this.countStore = countStore;
-    }
-
-    public int getOrderWeek() {
-        if (orderWeek == null) return 0;
-        else return orderWeek;
-    }
-
-    public void setOrderWeek(int orderWeek) {
-        this.orderWeek = orderWeek;
-    }
-
-    public int getDeliveryWeek() {
-        if (deliveryWeek == null) return 0;
-        else return deliveryWeek;
-    }
-
-    public void setDeliveryWeek(int deliveryWeek) {
-        this.deliveryWeek = deliveryWeek;
-    }
-
-    public int getStockDC() {
-        return stockDC;
-    }
-
-    public void setStockDC(int stockDC) {
-        this.stockDC = stockDC;
-    }
-
-    public int getStockStore() {
-        return stockStore;
-    }
-
-    public void setStockStore(int stockStore) {
-        this.stockStore = stockStore;
-    }
-
-    public List<DistributionCenter> getDistributionCenterList() {
-        return distributionCenterList;
-    }
-
-    public void setDistributionCenterList(List<DistributionCenter> distributionCenterList) {
-        this.distributionCenterList = distributionCenterList;
-    }
-
-    public List<ItemOutlay> getItemOutlayList() {
-        return itemOutlayList;
-    }
-
-    public void setItemOutlayList(List<ItemOutlay> itemOutlayList) {
-        this.itemOutlayList = itemOutlayList;
-    }
 
     public int getRecommendedOrderRound() {
         int k = (recommendedOrder + quantum) / quantum;
         if (recommendedOrder % quantum == 0) return recommendedOrder;
         else return quantum * k;
-    }
-
-    public Integer getRecommendedOrder() {
-        return recommendedOrder;
-    }
-
-    public void setRecommendedOrder(int recommendedOrder) {
-        this.recommendedOrder = recommendedOrder;
-    }
-
-    public void setOrderWeek(Integer orderWeek) {
-        this.orderWeek = orderWeek;
-    }
-
-    public void setDeliveryWeek(Integer deliveryWeek) {
-        this.deliveryWeek = deliveryWeek;
-    }
-
-    public void setRecommendedOrder(Integer recommendedOrder) {
-        this.recommendedOrder = recommendedOrder;
-    }
-
-    public boolean isPromo() {
-        return promo;
-    }
-
-    public void setPromo(boolean promo) {
-        this.promo = promo;
     }
 
     @Override
