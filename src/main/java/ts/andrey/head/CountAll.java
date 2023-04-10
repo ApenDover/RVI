@@ -112,7 +112,7 @@ public class CountAll {
 
                 itemStockHashMap.forEach((it, integer) -> {
                     if (integer * DAYS_IN_A_WEEK >= CRITICAL_TOVAR_ZAPAS) {
-                        removed.add(item);
+                        removed.add(it);
                     }
                 });
 
@@ -146,7 +146,16 @@ public class CountAll {
                     while (countPalletNeeded > 0) {
                         final var itemStockHashMapAddOne = new HashMap<>(tovarZapas(allItemsSupplier, itemOutlayTreeSet)); // << считаем товарный запас для каждого товара добавив квант к рекомендованному заказу
 
+                        itemStockHashMapAddOne.forEach((it, integer) -> {
+                            if (integer * DAYS_IN_A_WEEK >= CRITICAL_TOVAR_ZAPAS) {
+                                removed.add(it);
+                            }
+                        });
+
                         final var minTzItem = itemStockHashMapAddOne.entrySet()
+                                .stream()
+                                .filter(itemIntegerEntry -> !(removed.contains(itemIntegerEntry.getKey())))
+                                .collect(Collectors.toSet())
                                 .stream()
                                 .min(Comparator.comparingInt(Map.Entry::getValue))
                                 .get().getKey(); // взяли товар с минимальным товарным запаcом
@@ -214,6 +223,7 @@ public class CountAll {
         if (new ThisWeekNumber().getWeek() == orderWeek) {
             for (Item item : itemSet) {
                 if (removed.contains(item)) {
+                    System.out.println("Пропускаю TZ > 150: " + item.getPlu());
                     continue;
                 }
                 lastWeek = item.getDeliveryWeek();
@@ -225,10 +235,8 @@ public class CountAll {
                     // нужно все переводить в штуки
                     specialQuantumSupplier.put(item, supplier.getMinOrder() / item.getQuantum());
                     supplierPackage.put(item, orderCount);
-//                    System.out.println(item.getSupplier().getName() + " - " + item.getPlu() + " - добавил " + orderCount + " штук");
                 } else {
                     supplierPackage.put(item, orderCount);
-//                    System.out.println(item.getSupplier().getName() + " - " + item.getPlu() + " - добавил " + orderCount + " палет");
                 }
                 // << добавляем в корзину
                 orderPalletCount = orderPalletCount + orderCount; // << общее количество паллетов к заказу
@@ -248,6 +256,7 @@ public class CountAll {
             var howAdd = countPalletNeeded;
             for (Item item : itemSet) {
                 if (removed.contains(item)) {
+                    System.out.println("Пропускаю TZ > 150: " + item.getPlu());
                     continue;
                 }
                 if (howAdd > 0) { // если еще нужно добавлять палеты
